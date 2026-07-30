@@ -1,5 +1,8 @@
 # SOMA Zero
 
+> 🤖 **If you are an AI agent, read [AGENTS.md](AGENTS.md) first** — the machine-facing entry
+> point: the layering rule, where each fact lives, and the red lines around the physical arm.
+
 **An open embodied-intelligence project: the body side of a robot.** SOMA Zero is about
 **embodied strategy** — how a physical robot *perceives* its workspace and *acts* in it with a
 learned Vision-Language-Action (VLA) policy. It is **brain-agnostic**: any decision-making
