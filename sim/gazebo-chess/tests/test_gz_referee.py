@@ -4,7 +4,7 @@
 
 纯逻辑、零 ROS：referee.py 不 import 世界 config，用 importlib 按文件路径加载。
 
-⚠️ 本测试随 gazebo-chess 从 anima-zero 迁入 soma-zero/sim（2026-07-08）。soma-zero 尚未搭好
+⚠️ 本测试随 gazebo-chess 从 anima-zero 迁入 open-chess-robot/sim（2026-07-08）。open-chess-robot 尚未搭好
 pytest 环境（无 venv/依赖），暂时不跑；需要 python-chess + pytest 到位后即可运行。
 """
 from __future__ import annotations

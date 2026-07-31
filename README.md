@@ -1,99 +1,75 @@
-# SOMA Zero
+[![Language: English](https://img.shields.io/badge/Language-English-2f81f7?style=flat-square)](README.md) [![语言: 简体中文](https://img.shields.io/badge/语言-简体中文-e67e22?style=flat-square)](README_zh.md)
 
-> 🤖 **If you are an AI agent, read [AGENTS.md](AGENTS.md) first** — the machine-facing entry
-> point: the layering rule, where each fact lives, and the red lines around the physical arm.
+# Open Chess Robot
 
-**An open embodied-intelligence project: the body side of a robot.** SOMA Zero is about
-**embodied strategy** — how a physical robot *perceives* its workspace and *acts* in it with a
-learned Vision-Language-Action (VLA) policy. It is **brain-agnostic**: any decision-making
-framework can drive this body through a small, neutral contract.
+[![ROS 2](https://img.shields.io/badge/ROS_2-Jazzy-22314e?style=flat-square)](https://docs.ros.org/en/jazzy/) [![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic-orange?style=flat-square)](https://gazebosim.org/) [![Status: Active](https://img.shields.io/badge/Status-Active-success?style=flat-square)]() [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-> **Flagship task — physical chess.** A real robot arm plays chess on a real board: the camera
-> reads the scene, a brain (whichever one is plugged in) chooses a move, and SOMA carries it
-> out — picking up and placing the piece with a VLA policy. Chess is the *first task profile*,
-> chosen because it is long-horizon and unforgiving of sloppy manipulation — it is not the
-> project's identity.
+> 🤖 If you are an AI agent, read [AGENTS.md](AGENTS.md) first.
 
-This is the **Zero** line — fully open source, meant to show the project end to end.
-Deeper production work continues in private repos.
+A robot arm that plays chess against you — physically, in a Gazebo simulation, with a real
+gripper picking real pieces. Any decision-making "brain" can drive the arm through a small
+world protocol ([AWI](https://github.com/jeffliulab/anima-zero) over MCP); the arm side never
+imports a brain framework. This repo is the body half of the chess line — the brain half is
+[`anima-zero`](https://github.com/jeffliulab/anima-zero).
 
 ---
 
-## The body's promise (to any brain)
+## Overview
 
-SOMA does the *acting* half of the classic **System 1 / System 2** split — fast, reflexive,
-high-frequency. Its promise to whatever brain is attached:
+Chess is a task that punishes sloppy manipulation: 64 squares, centimeter targets, long
+horizons. This repo simulates that task end to end — a 6-DOF servo arm (Episode1) with a
+servo gripper in Gazebo Harmonic, two cameras, a referee that knows the rules — and exposes
+it as an MCP "world" server. A brain connects over HTTP, perceives the board, and issues
+human-level commands ("move e2 to e4"); the world executes them with MoveIt motion planning
+and reports back honestly.
 
-- **One atomic action per command** ("move piece e2 → e4"), human-readable, never joint angles.
-- **An honest report back** — success / failure / why, including execution self-checks.
-- **No thinking on its own**: it does not plan, does not judge task success, does not retry.
-  Retry, recovery, and verification always belong to the brain — *whichever* brain that is.
+The same body will move to the real Episode1 arm; the VLA data-and-training line for that
+lives in [`episode-vla-pi`](https://github.com/jeffliulab/episode-vla-pi).
 
+## Key features
+
+- **Full-stack chess world**: ROS 2 Jazzy + MoveIt + Gazebo Harmonic, 32 pieces spawned from
+  any FEN, real grasp physics (no link-attacher shortcuts), rule-aware referee.
+- **Brain-agnostic protocol**: the world speaks AWI over MCP — observe / move / remove /
+  place / status — so any MCP-host framework can play, not just ANIMA.
+- **Vision pipeline**: overhead + oblique camera bridges with named streams, board-state
+  perception designed for closed-loop recovery.
+- **Failure injection**: grip-miss and other fault hooks for testing a brain's recovery
+  behavior, not just its happy path.
+
+## Prerequisites
+
+- ROS 2 Jazzy + Gazebo Harmonic on Ubuntu 24.04
+- The Episode1 ROS 2 simulation stack (URDF + Gazebo twin), colcon-built, with its path
+  exported as `EPISODE_WS`
+- Python 3.12
+
+## Installation
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source "$EPISODE_WS/install/setup.bash"
+cd sim/gazebo-chess
+python3 -m venv --system-site-packages .venv
+.venv/bin/pip install -e .
 ```
-                 ┌──────────────── SOMA Zero (this repo) ────────────────┐
-                 │                                                        │
-   sensors ────▶ │  perception (eyes) ──▶ scene state ─┐                  │
-                 │                                     │   neutral        │
-                 │                              interface/ contract       │
-                 │                                     │                  │
-   actuator ◀─── │  control (hands, VLA) ◀── action intent ◀──┐           │
-                 │                                            │           │
-                 └────────────────────────────────────────────┼───────────┘
-                                                              │
-                                              adapters/ ──▶ any brain
-                                              (protocol translation)
+
+## Running a game
+
+Three stages, in order (each in its own sourced terminal, or scripted):
+
+```bash
+ros2 launch episode1_gz_sim sim.launch.py        # 1. Gazebo stack
+sim/gazebo-chess/scripts/start_camera_bridge.sh  # 2. camera bridge
+cd sim/gazebo-chess && source .venv/bin/activate
+uvicorn server:app --port 8106                   # 3. world server
 ```
 
-The body core never imports any brain framework. Each brain gets a thin **adapter** that
-translates the neutral contract into that framework's wire protocol.
-
-## What's inside
-
-| Folder | Role | Status |
-|---|---|---|
-| [`perception/`](perception/) | Eyes — turn camera images of the workspace into structured scene state | 🚧 early |
-| [`control/`](control/) | Hands — VLA policy + arm execution for one atomic action | 🚧 early |
-| [`interface/`](interface/) | The neutral brain↔body contract (observation / action intent / result / progress) | 🚧 early |
-| [`adapters/`](adapters/) | Per-brain protocol translation (one subfolder per supported brain) | 🚧 docs first |
-| [`docs/`](docs/) | Architecture & design notes | 🚧 early |
-
-## Supported brains
-
-| Brain | Protocol | Status |
-|---|---|---|
-| [`anima-zero`](https://github.com/jeffliulab/anima-zero) | AWI over MCP — SOMA mounts as one of ANIMA's "worlds" | 📝 [integration guide](adapters/anima/) (docs first) |
-
-Any framework that can act as an MCP host — or speak a similarly small tool/observation
-protocol — can drive this body the same way. See [`adapters/`](adapters/) for the pattern.
-
-## Hardware
-
-- Episode servo/serial robot arm with a servo gripper
-- RGB webcam (no depth) for workspace perception
-
-> ⚠️ **Safety.** This arm has no effective hardware e-stop — cutting power is the only real
-> stop, and the joints go limp when power is removed. Every command that moves the physical
-> arm is run by a human operator, never autonomously from CI or scripts.
-
-## Before Soma Zero
-
-SOMA Zero grew out of earlier hand-built robot-arm attempts (the *soma-arm* era). Two of the
-earliest snapshots are kept under
-[`docs/legacy/soma-arm-early/`](docs/legacy/soma-arm-early/) as a record of where this
-started; the full history of those attempts also lives in this repo's git log.
-
-## Roadmap
-
-- [ ] Workspace perception: camera → reliable structured scene state (first task profile: chessboard)
-- [ ] One-shot extrinsic calibration (board square → world coordinates)
-- [ ] VLA pick-and-place: execute a single move as **one** atomic action, returning an honest
-      self-report (`ActionResult`)
-- [ ] Expose the body as a server so any supported brain can drive it (first adapter:
-      [`adapters/anima/`](adapters/anima/)); full task loop — brain perceives → decides →
-      SOMA executes one action → repeat
-
-> The closed loop (retry, recovery, verifying an action actually worked) lives in the **brain**,
-> not here. SOMA's job is to do one action well and report back honestly.
+Then point any AWI-speaking brain at `http://localhost:8106` — with `anima-zero`, add
+`gazebo-chess=http://localhost:8106` to its `ANIMA_WORLDS` and play from its web UI.
+Headless mode (`headless:=true rviz:=false`), custom FEN (`GZCHESS_SETUP_FEN`), and side
+selection (`GZCHESS_BOT_SIDE`) are supported; see `sim/gazebo-chess/README.md` for the full
+knob list.
 
 ## License
 
