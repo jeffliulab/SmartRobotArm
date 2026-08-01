@@ -37,3 +37,8 @@ Thumbs.db
 # Agent working notes (local only — not part of the open-source repo).
 # AGENTS.md is deliberately NOT here: it is the public, machine-facing entry point.
 CLAUDE.md
+
+# Scratch + stray runtime logs (project rule: intermediates live in the workspace-root temp/).
+temp/
+MUJOCO_LOG.TXT
+node_modules/
