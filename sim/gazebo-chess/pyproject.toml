@@ -17,7 +17,11 @@ dependencies = [
     "numpy>=1.26,<2",        # 上界必须钉住：ROS2 Jazzy 系统栈(cv_bridge/scipy 等 C 扩展)按 numpy 1.x ABI 编译,venv 里进 numpy 2 会让它们 import 崩(2026-07-09 重建 venv 实锤)
     "opencv-python>=4.9,<5",  # opencv-python 5.x 强制 numpy>=2,与上一条冲突,钉在 4.x
     "chess>=1.10",
-    "mcp>=1.2",         # 世界作 MCP server 暴露 AWI(tools/resources/prompts);挂在 /mcp
+    # ⛔ 上界是**必须的**，同 anima-zero 主仓 pyproject 那条：awi_mcp.py import 的是
+    #    `mcp.server.lowlevel` / `mcp.server.streamable_http_manager`，是内部子模块。
+    #    mcp 2.0.0 改了 Server 的 API（`Server.list_tools` 没了），世界一起就 AttributeError。
+    #    ⚠️ import 阶段发现不了——报错在 build_awi_mcp() 里，起服务那一刻才炸。
+    "mcp>=1.2,<2",      # 世界作 MCP server 暴露 AWI(tools/resources/prompts);挂在 /mcp
 ]
 
 [tool.setuptools]
