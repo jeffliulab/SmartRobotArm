@@ -38,7 +38,8 @@ Thumbs.db
 # AGENTS.md is deliberately NOT here: it is the public, machine-facing entry point.
 CLAUDE.md
 
-# Scratch + stray runtime logs (project rule: intermediates live in the workspace-root temp/).
+# Scratch + stray runtime logs (project rule: intermediates live in this repo's own temp/;
+# the workspace root no longer has one — see the workspace CLAUDE.md, point 4).
 temp/
 MUJOCO_LOG.TXT
 node_modules/

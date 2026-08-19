@@ -19,7 +19,7 @@ import config
 from awi_mcp import build_awi_mcp
 from world import GazeboChessWorld
 
-_CORS = [o.strip() for o in os.getenv("ANIMA_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+_CORS = [o.strip() for o in os.getenv("ANIMA_CORS_ORIGINS", "http://localhost:8100").split(",") if o.strip()]
 _HERE = os.path.dirname(os.path.abspath(__file__))
 
 world = GazeboChessWorld()
